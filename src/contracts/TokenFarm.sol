@@ -6,6 +6,7 @@ import "./DaiToken.sol";
 contract TokenFarm {
     //All code goes here...
     string public name = "Dapp Token Farm";
+    address public owner;
     DappToken public dappToken;
     DaiToken public daiToken;
 
@@ -17,6 +18,7 @@ contract TokenFarm {
     constructor(DappToken _dappToken, DaiToken _daiToken) public {
         dappToken = _dappToken;
         daiToken = _daiToken;
+        owner = msg.sender;
     }
 
     // 1. Stakes Tokens (Deposit)
@@ -38,9 +40,35 @@ contract TokenFarm {
     }
 
     // Unstaking Tokens (Withdraw)
+    function unstakeTokens() public {
+        // Fetch staking balance
+        uint256 balance = stakingBalance[msg.sender];
+
+        // Require amount greater than 0
+        require(balance > 0, "staking balance cannot be 0");
+
+        // Transfer Mock Dai tokens to this contract for staking
+        daiToken.transfer(msg.sender, balance);
+
+        // Reset staking balance
+        stakingBalance[msg.sender] = 0;
+
+        // Update staking status
+        isStaking[msg.sender] = false;
+    }
 
     // Issuing Tokens
-    function issueToken() public {
-        for (uint256 i = 0; i < stakers.length; i++) {}
+    function issueTokens() public {
+        // Only owner can call this function
+        require(msg.sender == owner, "caller must be the owner");
+
+        // Issue tokens to all stakers
+        for (uint256 i = 0; i < stakers.length; i++) {
+            address recipient = stakers[i];
+            uint256 balance = stakingBalance[recipient];
+            if (balance > 0) {
+                dappToken.transfer(recipient, balance);
+            }
+        }
     }
 }
